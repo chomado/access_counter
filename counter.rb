@@ -1,13 +1,15 @@
-# カウンタ宣言
-count = 0
+# 書き込みロック(write lock)を使用してカウンタを更新。
+File.open("count.txt", File::RDWR|File::CREAT, 0644) {|f|
+	f.flock(File::LOCK_EX)
+	value = f.read.to_i + 1
+	f.rewind
+	f.write("#{value}\n")
+	f.flush
+	f.truncate(f.pos)
+}
 
-# 今のカウンタ読み込んで, count へ代入
-File.open("count.txt", "r") do |file|
-	count = file.read.to_i
-	count += 1
-end
-
-# カウンタファイル更新
-File.open("count.txt", "w") do |file|
-	file.print(count)
-end
+# 読み込みロック(read lock)を使用してカウンタを読み込み。
+File.open("count.txt", "r") {|f|
+	f.flock(File::LOCK_SH)
+	p f.read
+}
